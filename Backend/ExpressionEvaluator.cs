@@ -5,13 +5,13 @@ namespace Backend;
 
 public static class ExpressionEvaluator
 {
-    public static double Evalute(string infix) => EvalutePostfix(ToPostfix(infix));
+    public static double Evaluate(string infix) => EvalutePostfix(ToPostfix(infix));
 
     private static string ToPostfix(string infix)
     {
         var posfix = string.Empty;
         var stack = new Stack<char>();
-        foreach (var item in infix)
+        /*foreach (var item in infix)
         {
             if (IsOperator(item))
             {
@@ -48,7 +48,55 @@ public static class ExpressionEvaluator
             {
                 posfix += item;
             }
-        }
+        }*/
+        for (int i = 0; i < infix.Length;)
+        {
+            char item = infix[i];
+
+            if (IsOperator(item))
+            {
+                if (item == ')')
+                {
+                    var ope = stack.Pop();
+                    while (ope != '(')
+                    {
+                        posfix += ope;
+                        ope = stack.Pop();
+                    }
+                }
+                else
+                {
+                    if (stack.Count == 0)
+                    {
+                        stack.Push(item);
+                    }
+                    else
+                    {
+                        if (PriorityInfix(item) > PriorityStack(stack.Peek()))
+                        {
+                            stack.Push(item);
+                        }
+                        else
+                        {
+                            posfix += stack.Pop();
+                            stack.Push(item);
+                        }
+                    }
+                }
+                i++;
+            }
+            else
+            {
+                string num = "";
+
+                while (i < infix.Length && !IsOperator(infix[i]))
+                {
+                    num += infix[i];
+                    i++;
+                }
+                posfix += num + " ";
+            }
+        }   
         do
         {
             posfix += stack.Pop();
@@ -83,19 +131,40 @@ public static class ExpressionEvaluator
     private static double EvalutePostfix(string postfix)
     {
         var stack = new Stack<double>();
-        foreach (var item in postfix)
+        int i = 0;
+
+        while (i < postfix.Length)
         {
-            if (IsOperator(item))
+            if (postfix[i] == ' ')
             {
-                var ope2 = stack.Pop();
-                var ope1 = stack.Pop();
-                stack.Push(Calculate(ope1, ope2, item));
+                i++;
+            }
+            else if (!IsOperator(postfix[i]))
+            {
+                string num = "";
+
+                while (i < postfix.Length &&
+                       postfix[i] != ' ' &&
+                       !IsOperator(postfix[i]))
+                {
+                    num += postfix[i];
+                    i++;
+                }
+
+                stack.Push(double.Parse(num, System.Globalization.CultureInfo.InvariantCulture));
             }
             else
             {
-                stack.Push(char.GetNumericValue(item));
+                char item = postfix[i];
+
+                var ope2 = stack.Pop();
+                var ope1 = stack.Pop();
+
+                stack.Push(Calculate(ope1, ope2, item));
+                i++;
             }
         }
+
         return stack.Pop();
     }
 
